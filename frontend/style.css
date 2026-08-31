@@ -2,8 +2,8 @@
 
 :root {
   --bg-primary: #0a0e17;
-  --bg-card: rgba(17, 24, 39, 0.75);
-  --bg-card-hover: rgba(31, 41, 55, 0.85);
+  --bg-card: rgba(17, 24, 39, 0.85);
+  --bg-card-hover: rgba(31, 41, 55, 0.95);
   --border-color: rgba(75, 85, 99, 0.35);
   --accent-cyan: #06b6d4;
   --accent-green: #10b981;
@@ -19,6 +19,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -44,20 +45,35 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
-  border-radius: 1rem;
+  border-radius: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .glass-panel {
+    border-radius: 1rem;
+  }
 }
 
 .glass-header {
-  background: rgba(10, 14, 23, 0.85);
+  background: rgba(10, 14, 23, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
 }
 
+/* Hide scrollbar for horizontal chip scroll on mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: #0d131f;
@@ -72,8 +88,8 @@ body {
 
 /* Glowing Pulsing Status Radar */
 .pulse-radar {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   position: relative;
 }
@@ -101,35 +117,37 @@ body {
   100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* Custom Range Sliders */
+/* Touch-Optimized Range Sliders */
 input[type="range"] {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
-  height: 6px;
+  height: 8px;
   background: #1f2937;
-  border-radius: 3px;
+  border-radius: 4px;
   outline: none;
-  transition: all 0.2s;
+  touch-action: pan-y;
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: #06b6d4;
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.7);
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.25);
+input[type="range"]::-webkit-slider-thumb:hover,
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.2);
   background: #22d3ee;
 }
 
-/* Number inputs */
+/* Mobile inputs */
 input[type="number"], input[type="text"], select, textarea {
   background: #111827;
   border: 1px solid #374151;
@@ -137,7 +155,9 @@ input[type="number"], input[type="text"], select, textarea {
   border-radius: 0.5rem;
   padding: 0.4rem 0.6rem;
   outline: none;
+  font-size: 0.875rem;
   transition: border-color 0.2s, box-shadow 0.2s;
+  touch-action: manipulation;
 }
 
 input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:focus {
@@ -150,18 +170,20 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:foc
   overflow-x: auto;
   border-radius: 0.75rem;
   border: 1px solid var(--border-color);
+  -webkit-overflow-scrolling: touch;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  min-width: 680px;
 }
 
 .data-table th {
   background: rgba(17, 24, 39, 0.95);
-  padding: 0.85rem 1rem;
-  font-size: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -178,19 +200,31 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:foc
 }
 
 .data-table td {
-  padding: 0.85rem 1rem;
+  padding: 0.75rem 0.875rem;
   border-bottom: 1px solid rgba(55, 65, 81, 0.4);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   white-space: nowrap;
   transition: background-color 0.15s;
 }
 
-.data-table tbody tr {
-  transition: background 0.15s ease;
-}
-
 .data-table tbody tr:hover {
   background: rgba(31, 41, 55, 0.6);
+}
+
+/* Mobile Stock Card View */
+.mobile-stock-card {
+  background: rgba(17, 24, 39, 0.75);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.875rem;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  cursor: pointer;
+}
+
+.mobile-stock-card:active {
+  transform: scale(0.985);
+  background: rgba(31, 41, 55, 0.85);
+  border-color: rgba(6, 182, 212, 0.5);
 }
 
 /* Badges */
@@ -198,9 +232,9 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:foc
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.55rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   line-height: 1;
 }
@@ -253,8 +287,8 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:foc
 
 /* RSI Mini Gauge Bar */
 .rsi-bar-container {
-  width: 90px;
-  height: 6px;
+  width: 70px;
+  height: 5px;
   background: #1f2937;
   border-radius: 3px;
   overflow: hidden;
@@ -269,8 +303,8 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:foc
 
 /* Modal Overlay */
 .modal-overlay {
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
 }
 
 /* Animations */

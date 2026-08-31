@@ -1,6 +1,6 @@
 /**
  * Stock Screener Frontend Controller
- * Handles SSE live streaming, dynamic instant re-filtering, ranking calculations, Chart.js modals, and CSV export.
+ * Handles SSE live streaming, dynamic instant re-filtering, ranking calculations, Chart.js modals, mobile card view, and CSV export.
  */
 
 // Application State
@@ -15,6 +15,7 @@ const state = {
   sortColumn: 'rank_score',
   sortDirection: 'desc',
   searchQuery: '',
+  mobileView: 'cards', // 'cards' or 'table'
   priceChartInstance: null,
   rsiChartInstance: null
 };
@@ -22,16 +23,16 @@ const state = {
 // Universe definitions fallback if API offline
 const DEFAULT_PRESETS = {
   nse: [
-    { id: 'nifty_50', name: 'Nifty 50 (Bluechips)' },
-    { id: 'bank_nifty', name: 'Bank Nifty (Banking)' },
-    { id: 'nifty_100', name: 'Nifty 100 (Large Cap)' },
-    { id: 'nifty_500', name: 'Nifty 500 (Broad)' },
-    { id: 'custom', name: 'Custom Tickers' }
+    { id: 'nifty_50', name: 'Nifty 50' },
+    { id: 'bank_nifty', name: 'Bank Nifty' },
+    { id: 'nifty_100', name: 'Nifty 100' },
+    { id: 'nifty_500', name: 'Nifty 500' },
+    { id: 'custom', name: 'Custom' }
   ],
   us: [
-    { id: 'sp_500_top', name: 'S&P 100 / Large Cap' },
+    { id: 'sp_500_top', name: 'S&P 100' },
     { id: 'nyse_top', name: 'NYSE Blue Chips' },
-    { id: 'custom', name: 'Custom Tickers' }
+    { id: 'custom', name: 'Custom' }
   ]
 };
 
@@ -59,7 +60,7 @@ async function loadUniverses() {
   }
 }
 
-// Render Universe Preset Buttons
+// Render Universe Preset Buttons (Mobile swipe friendly)
 function renderUniversePresets() {
   const container = document.getElementById('universePresets');
   container.innerHTML = '';
@@ -71,13 +72,13 @@ function renderUniversePresets() {
   // Add custom option if not present
   const allPresets = [...presets];
   if (!allPresets.some(p => p.id === 'custom')) {
-    allPresets.push({ id: 'custom', name: 'Custom Tickers' });
+    allPresets.push({ id: 'custom', name: 'Custom' });
   }
 
   allPresets.forEach(preset => {
     const btn = document.createElement('button');
     const isSelected = state.universe === preset.id;
-    btn.className = `px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+    btn.className = `px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition border shrink-0 ${
       isSelected
         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
         : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
@@ -134,6 +135,32 @@ function initEventListeners() {
     });
   });
 
+  // Mobile View Switcher (Cards vs Table)
+  const viewCardsBtn = document.getElementById('viewCardsBtn');
+  const viewTableBtn = document.getElementById('viewTableBtn');
+  const mobileCardsContainer = document.getElementById('mobileCardsContainer');
+  const desktopTableContainer = document.getElementById('desktopTableContainer');
+
+  if (viewCardsBtn && viewTableBtn) {
+    viewCardsBtn.addEventListener('click', () => {
+      state.mobileView = 'cards';
+      viewCardsBtn.className = 'px-2 py-1 rounded-md font-semibold bg-cyan-500/20 text-cyan-300 text-[11px]';
+      viewTableBtn.className = 'px-2 py-1 rounded-md font-medium text-slate-400 text-[11px]';
+      mobileCardsContainer.classList.remove('hidden');
+      desktopTableContainer.classList.add('hidden');
+      desktopTableContainer.classList.remove('block');
+    });
+
+    viewTableBtn.addEventListener('click', () => {
+      state.mobileView = 'table';
+      viewTableBtn.className = 'px-2 py-1 rounded-md font-semibold bg-cyan-500/20 text-cyan-300 text-[11px]';
+      viewCardsBtn.className = 'px-2 py-1 rounded-md font-medium text-slate-400 text-[11px]';
+      mobileCardsContainer.classList.add('hidden');
+      desktopTableContainer.classList.remove('hidden');
+      desktopTableContainer.classList.add('block');
+    });
+  }
+
   // Ranking Weights Toggle Panel
   const toggleWeightsBtn = document.getElementById('toggleWeightsBtn');
   const weightsSettingsPanel = document.getElementById('weightsSettingsPanel');
@@ -165,12 +192,12 @@ function setMarket(market) {
 
   if (market === 'nse') {
     state.universe = 'nifty_50';
-    nseBtn.className = 'flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition';
-    usBtn.className = 'flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition';
+    nseBtn.className = 'flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition';
+    usBtn.className = 'flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition';
   } else {
     state.universe = 'sp_500_top';
-    usBtn.className = 'flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition';
-    nseBtn.className = 'flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition';
+    usBtn.className = 'flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition';
+    nseBtn.className = 'flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition';
   }
 
   document.getElementById('customTickersWrapper').classList.add('hidden');
@@ -294,7 +321,7 @@ function startScan() {
   state.eventSource.onerror = (err) => {
     console.error('SSE connection error:', err);
     stopScan();
-    document.getElementById('statusText').innerText = 'Connection Error';
+    document.getElementById('statusText').innerText = 'Error';
   };
 }
 
@@ -317,7 +344,7 @@ function handleScanEvent(data) {
 
     if (data.type === 'complete') {
       stopScan();
-      document.getElementById('statusText').innerText = `Scan Complete (${data.matched_count} matches)`;
+      document.getElementById('statusText').innerText = `Done (${data.matched_count})`;
     }
   } else if (data.type === 'error') {
     alert(`Scan error: ${data.message}`);
@@ -347,7 +374,7 @@ function updateScanUI(scanning) {
     stopBtn.classList.add('flex');
     progressCard.classList.remove('hidden');
     radar.className = 'pulse-radar active';
-    statusText.innerText = 'Scanning Live...';
+    statusText.innerText = 'Scanning...';
   } else {
     startBtn.classList.remove('hidden');
     stopBtn.classList.add('hidden');
@@ -399,8 +426,8 @@ function applyFiltersAndRender(isFromStream = false) {
   // Update Top KPIs
   updateKpiMetrics();
 
-  // Render Table Rows
-  renderTable();
+  // Render Table & Mobile Cards
+  renderAllViews();
 }
 
 function recalculateRankScoresAndRender() {
@@ -408,12 +435,9 @@ function recalculateRankScoresAndRender() {
   const rsiWeight = parseFloat(document.getElementById('rsiWeightSlider').value) / 100.0;
   const peWeight = parseFloat(document.getElementById('peWeightSlider').value) / 100.0;
 
-  // Recalculate rank_score on each stock
   state.allScanned.forEach(stock => {
-    // Vol Score (0-100)
     const volScore = stock.volume_ratio <= 0 ? 0 : Math.min(Math.max((stock.volume_ratio / 4.0) * 100, 0), 100);
     
-    // RSI Score (0-100)
     let rsiScore = 50;
     if (stock.rsi !== null && stock.rsi !== undefined) {
       if (stock.rsi < 30) rsiScore = Math.max((stock.rsi / 30) * 25, 0);
@@ -422,7 +446,6 @@ function recalculateRankScoresAndRender() {
       else rsiScore = Math.max(100 - (stock.rsi - 80) * 2, 70);
     }
 
-    // PE Score (0-100)
     let peScore = 30;
     if (stock.trailing_pe !== null && stock.trailing_pe > 0) {
       if (stock.trailing_pe <= 10) peScore = 100 - (stock.trailing_pe / 10) * 10;
@@ -454,7 +477,6 @@ function sortFilteredResults() {
     return dir * (valA - valB);
   });
 
-  // Assign fresh integer ranks
   state.filtered.forEach((item, index) => {
     item.rank = index + 1;
   });
@@ -485,7 +507,14 @@ function updateKpiMetrics() {
   }
 }
 
-// Render Data Table HTML
+// Render Both Desktop Table and Mobile Responsive Cards
+function renderAllViews() {
+  renderTable();
+  renderMobileCards();
+  if (window.lucide) lucide.createIcons();
+}
+
+// 1. Desktop Table Renderer
 function renderTable() {
   const tbody = document.getElementById('tableBody');
   
@@ -495,13 +524,12 @@ function renderTable() {
         <td colspan="10" class="text-center py-12 text-slate-500">
           <div class="flex flex-col items-center justify-center space-y-2">
             <i data-lucide="filter-x" class="w-8 h-8 text-slate-600 mb-1"></i>
-            <p class="text-sm font-medium text-slate-400">No stocks match your current filter parameters.</p>
+            <p class="text-sm font-medium text-slate-400">No stocks match your filter criteria.</p>
             <p class="text-xs text-slate-500">Try relaxing the P/E maximum or lowering the Volume Spike threshold.</p>
           </div>
         </td>
       </tr>
     `;
-    if (window.lucide) lucide.createIcons();
     return;
   }
 
@@ -511,25 +539,21 @@ function renderTable() {
     const changeClass = isGain ? 'text-emerald-400' : 'text-rose-400';
     const changeSign = isGain ? '+' : '';
 
-    // Rank Badge
     let rankBadge = `<span class="font-mono text-slate-400 font-bold">${stock.rank}</span>`;
     if (stock.rank === 1) rankBadge = `<span class="badge badge-rank-1">🥇 #1</span>`;
     else if (stock.rank === 2) rankBadge = `<span class="badge badge-rank-2">🥈 #2</span>`;
     else if (stock.rank === 3) rankBadge = `<span class="badge badge-rank-3">🥉 #3</span>`;
 
-    // PE Badge
     const peVal = stock.trailing_pe !== null && stock.trailing_pe !== undefined
       ? `${stock.trailing_pe.toFixed(1)}`
       : '<span class="text-slate-500 italic text-xs">N/A</span>';
 
-    // RSI Color Gauge
     const rsiVal = stock.rsi !== null && stock.rsi !== undefined ? stock.rsi.toFixed(1) : '--';
-    let rsiColor = '#10b981'; // Green
-    if (stock.rsi >= 70) rsiColor = '#f59e0b'; // Overbought Orange
-    else if (stock.rsi <= 35) rsiColor = '#06b6d4'; // Cyan oversold
+    let rsiColor = '#10b981';
+    if (stock.rsi >= 70) rsiColor = '#f59e0b';
+    else if (stock.rsi <= 35) rsiColor = '#06b6d4';
     const rsiPercent = stock.rsi ? Math.min(Math.max(stock.rsi, 0), 100) : 50;
 
-    // Volume Spike Badge
     const volRatioFormatted = (stock.volume_ratio || 0).toFixed(2);
     let volBadgeClass = 'badge-cyan';
     if (stock.volume_ratio >= 3.0) volBadgeClass = 'badge-green';
@@ -581,7 +605,96 @@ function renderTable() {
   }).join('');
 
   tbody.innerHTML = rowsHtml;
-  if (window.lucide) lucide.createIcons();
+}
+
+// 2. Mobile Responsive Stock Cards Renderer (< 640px)
+function renderMobileCards() {
+  const cardsList = document.getElementById('mobileCardsList');
+  if (!cardsList) return;
+
+  if (state.filtered.length === 0) {
+    cardsList.innerHTML = `
+      <div class="text-center py-10 text-slate-500">
+        <i data-lucide="filter-x" class="w-7 h-7 mx-auto text-slate-600 mb-2"></i>
+        <p class="text-xs font-medium text-slate-400">No stocks match your filter criteria.</p>
+        <p class="text-[11px] text-slate-500 mt-1">Try adjusting the sliders above.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const cardsHtml = state.filtered.map(stock => {
+    const currSym = stock.currency === 'INR' ? '₹' : '$';
+    const isGain = (stock.change_1d_pct || 0) >= 0;
+    const changeClass = isGain ? 'text-emerald-400' : 'text-rose-400';
+    const changeSign = isGain ? '+' : '';
+
+    let rankLabel = `#${stock.rank}`;
+    let rankClass = 'bg-slate-800 text-slate-300';
+    if (stock.rank === 1) rankClass = 'bg-amber-500 text-slate-950 font-bold';
+    else if (stock.rank === 2) rankClass = 'bg-slate-300 text-slate-950 font-bold';
+    else if (stock.rank === 3) rankClass = 'bg-amber-700 text-white font-bold';
+
+    const peVal = stock.trailing_pe !== null && stock.trailing_pe !== undefined
+      ? stock.trailing_pe.toFixed(1)
+      : 'N/A';
+
+    const rsiVal = stock.rsi !== null && stock.rsi !== undefined ? stock.rsi.toFixed(1) : '--';
+    let rsiColor = '#10b981';
+    if (stock.rsi >= 70) rsiColor = '#f59e0b';
+    else if (stock.rsi <= 35) rsiColor = '#06b6d4';
+
+    const volRatioFormatted = (stock.volume_ratio || 0).toFixed(2);
+
+    return `
+      <div class="mobile-stock-card space-y-2.5" onclick="openChartModal('${stock.symbol}')">
+        <!-- Top Row: Rank, Symbol, Sector, Chart Button -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-[11px] px-2 py-0.5 rounded-md font-mono ${rankClass}">${rankLabel}</span>
+            <span class="font-mono font-bold text-sm text-white">${stock.symbol}</span>
+            <span class="badge badge-purple text-[10px] truncate max-w-[90px]">${stock.sector || 'General'}</span>
+          </div>
+
+          <div class="flex items-center space-x-1.5">
+            <span class="font-mono text-xs font-bold text-amber-400">Score: ${stock.rank_score}</span>
+            <button class="p-1 rounded bg-slate-800 text-cyan-400 border border-slate-700">
+              <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Middle Row: Company Name, Price & 1D Change -->
+        <div class="flex items-baseline justify-between pt-0.5">
+          <p class="text-xs text-slate-300 font-medium truncate max-w-[200px]">${stock.name || stock.symbol}</p>
+          <div class="text-right shrink-0">
+            <span class="font-mono font-bold text-sm text-slate-100">${currSym}${Number(stock.current_price).toLocaleString()}</span>
+            <span class="font-mono text-xs font-semibold ml-1.5 ${changeClass}">${changeSign}${stock.change_1d_pct}%</span>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Metric Pills (PE, Vol Spike, RSI) -->
+        <div class="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-slate-800/80 text-[11px] font-mono">
+          <div class="bg-slate-900/90 rounded-md px-2 py-1 border border-slate-800 text-center">
+            <span class="text-slate-500 block text-[9px] uppercase">P/E</span>
+            <span class="text-cyan-400 font-bold">${peVal}</span>
+          </div>
+
+          <div class="bg-slate-900/90 rounded-md px-2 py-1 border border-slate-800 text-center">
+            <span class="text-slate-500 block text-[9px] uppercase">Vol Spike</span>
+            <span class="text-emerald-400 font-bold">⚡ ${volRatioFormatted}x</span>
+          </div>
+
+          <div class="bg-slate-900/90 rounded-md px-2 py-1 border border-slate-800 text-center">
+            <span class="text-slate-500 block text-[9px] uppercase">RSI (14)</span>
+            <span class="font-bold" style="color: ${rsiColor}">${rsiVal}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  cardsList.innerHTML = cardsHtml;
 }
 
 // Reset Filters to Standard Defaults
@@ -620,7 +733,7 @@ async function openChartModal(symbol) {
   modal.classList.remove('hidden');
 
   document.getElementById('modalStockSymbol').innerText = symbol;
-  document.getElementById('modalStockName').innerText = 'Loading historical data...';
+  document.getElementById('modalStockName').innerText = 'Loading chart data...';
 
   try {
     const res = await fetch(`/api/stock/${encodeURIComponent(symbol)}/chart?period=6mo&interval=1d`);
@@ -685,11 +798,11 @@ function renderModalCharts(candleData, currSym) {
       scales: {
         x: {
           grid: { color: 'rgba(55, 65, 81, 0.3)' },
-          ticks: { color: '#9ca3af', font: { size: 10 }, maxTicksLimit: 8 }
+          ticks: { color: '#9ca3af', font: { size: 9 }, maxTicksLimit: 6 }
         },
         y: {
           grid: { color: 'rgba(55, 65, 81, 0.3)' },
-          ticks: { color: '#9ca3af', font: { size: 10 } }
+          ticks: { color: '#9ca3af', font: { size: 9 } }
         }
       }
     }
@@ -732,7 +845,7 @@ function renderModalCharts(candleData, currSym) {
           ticks: {
             stepSize: 30,
             color: '#9ca3af',
-            font: { size: 9 },
+            font: { size: 8 },
             callback: (v) => `${v}`
           }
         }
